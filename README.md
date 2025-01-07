@@ -111,7 +111,7 @@ async def handle_start(event):
     )
 ```
 
-Adicione o plugin ao diretório `plugins` e ele será carregado automaticamente.
+Adicione o plugin ao diretório `handlers` e ele será carregado automaticamente.
 
 ## 🧑‍💻 Contribuindo
 Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou pull requests para melhorar este projeto.
