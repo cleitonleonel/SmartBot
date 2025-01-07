@@ -1,0 +1,19 @@
+[project]
+name = "smartbot"
+version = "0.1.0"
+description = "Um boilerplate para bots com suporte a modularização e plugins inteligentes, inspirado nos smart plugins do Pyrogram."
+authors = [
+    {name = "cleiton",email = "cleiton.leonel@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "telethon (>=1.38.1,<2.0.0)",
+    "toml (>=0.10.2,<0.11.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
