@@ -11,11 +11,21 @@ from app.config import (
     API_ID,
     API_HASH,
 )
+
 SESSION_PATH = os.path.join(
     SESSIONS_DIR,
     APP_NAME
 )
 
+plugins = dict(
+    root="plugins",
+    include=[
+        "commands.start handle_exit handle_start handle_help",
+    ],
+    exclude=["message"]
+)
+
+# plugins = dict(root="plugins")
 
 client = Client(
     bot_token=BOT_TOKEN,
@@ -25,9 +35,9 @@ client = Client(
     connection=ConnectionTcpFull,
     device_model=DEVICE_MODEL,
     system_version=SYSTEM_VERSION,
-    app_version=APP_VERSION
+    app_version=APP_VERSION,
+    plugins=plugins
 )
-
 
 if __name__ == "__main__":
     client.start_service()

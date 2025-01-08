@@ -1,10 +1,7 @@
-import sys
 import asyncio
 import logging
-from pathlib import Path
-from importlib import import_module
 from telethon import TelegramClient
-from app.paths import get_handlers_path
+from app.plugin_loader import PluginLoader
 
 logging.basicConfig(level=logging.INFO)
 
@@ -14,7 +11,7 @@ class Client(TelegramClient):
     Custom Telegram Client with additional functionalities for managing handlers and lifecycle.
     """
 
-    def __init__(self, bot_token, **kwargs):
+    def __init__(self, bot_token, plugins=None, **kwargs):
         """
         Initializes the Telegram client with a bot token.
 
@@ -23,6 +20,7 @@ class Client(TelegramClient):
         """
         super().__init__(**kwargs)
         self.bot_token = bot_token
+        self.plugins = plugins
 
     async def send_message(self, chat_id, message='', **kwargs):
         """
@@ -34,32 +32,6 @@ class Client(TelegramClient):
         :return: The result of the send_message operation.
         """
         return await super().send_message(chat_id, message, **kwargs)
-
-    async def load_handlers(self):
-        """
-        Automatically loads and registers event handlers for the Telegram client.
-
-        Scans the handler directory for Python files, dynamically imports the modules,
-        and registers any functions decorated as handlers.
-        """
-        handlers_path = get_handlers_path()
-        for path in sorted(Path(handlers_path).rglob("*.py")):
-            module_path = '.'.join(path.parent.parts + (path.stem,))
-            if module_path not in sys.modules:
-                module = import_module(module_path)
-                logging.info(f"Loading module: {module_path}")
-
-                for name in dir(module):
-                    handler_func = getattr(module, name)
-
-                    if callable(handler_func) and getattr(handler_func, 'is_handler', False):
-                        handler_info = getattr(handler_func, 'handler_info', {})
-                        event = handler_info.get("event")
-
-                        logging.info(f"Registering handler: {name}")
-                        self.add_event_handler(handler_func, event)
-
-                        await asyncio.sleep(0.1)
 
     async def keep_alive(self):
         """
@@ -85,7 +57,11 @@ class Client(TelegramClient):
         """
         try:
             await self.start(bot_token=self.bot_token)
-            await self.load_handlers()
+            plugin_loader = PluginLoader(
+                self,
+                self.plugins
+            )
+            plugin_loader.load_plugins()
             logging.info('Starting Telegram bot!')
             await asyncio.gather(
                 self.run_until_disconnected(),
