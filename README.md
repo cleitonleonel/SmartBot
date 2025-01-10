@@ -111,7 +111,52 @@ async def handle_start(event):
     )
 ```
 
-Adicione o plugin ao diretório `handlers` e ele será carregado automaticamente.
+## 🧩 Smart Plugins
+
+- Carregue todos os manipuladores de cada módulo, nomeadamente handlers0.py, handlers1.py e handlers2.py em ordem alfabética (arquivos) e ordem de definição (manipuladores dentro de arquivos):
+
+```python
+plugins = dict(root="handlers")
+```
+
+- Carregue apenas manipuladores definidos dentro de handlers.py e handlers0.py, nesta ordem:
+
+```python
+from app.bot import Client
+plugins = dict(
+    root="handlers",
+    include=[
+        "subfolder2.handlers2",
+        "handlers0"
+    ]
+)
+Client("my_account", plugins=plugins).start_service()
+```
+
+- Carregue tudo, exceto os manipuladores dentro de handlers2.py:
+
+```python
+from app.bot import Client
+plugins = dict(
+    root="handlers",
+    exclude=["subfolder2.handlers2"]
+)
+Client("my_account", plugins=plugins).start_service()
+```
+
+- Carregue apenas fn3, fn1 e fn2 (nesta ordem) de handlers1.py:
+
+```python
+from app.bot import Client
+plugins = dict(
+    root="handlers",
+    include=["subfolder1.handlers1 fn3 fn1 fn2"]
+)
+
+Client("my_account", plugins=plugins).start_service()
+```
+
+ Adicione o plugin ao diretório `handlers` e ele será carregado automaticamente.
 
 ## 🧑‍💻 Contribuindo
 Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou pull requests para melhorar este projeto.

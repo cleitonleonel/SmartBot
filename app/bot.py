@@ -21,6 +21,9 @@ class Client(TelegramClient):
         super().__init__(**kwargs)
         self.bot_token = bot_token
         self.plugins = plugins
+        self.user_data = {
+            "id": 123456
+        }
 
     async def send_message(self, chat_id, message='', **kwargs):
         """

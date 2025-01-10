@@ -20,9 +20,9 @@ SESSION_PATH = os.path.join(
 plugins = dict(
     root="plugins",
     include=[
-        "commands.start handle_exit handle_start handle_help",
+        "commands.start handle_exit handle_start handle_help", "message"
     ],
-    exclude=["message"]
+    # exclude=["message"]
 )
 
 # plugins = dict(root="plugins")

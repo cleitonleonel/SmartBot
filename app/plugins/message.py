@@ -19,7 +19,9 @@ async def handle_text(event):
     sender = await event.get_sender()
     sender_id = sender.id
     logging.info(f"Start Handler Triggered by User ID: {sender_id}")
-    logging.debug(f"Event Client Instance: {event.client}")
+    logging.info(f"Event Client Instance: {event.client}")
+    logging.info(f"User Data Client: {event.client.user_data}")
+    event.client.user_data["name"] = sender.first_name
 
     await event.client.send_message(
         sender_id,

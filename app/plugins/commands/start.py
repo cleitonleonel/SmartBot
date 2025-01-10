@@ -19,7 +19,7 @@ async def handle_start(event):
     sender = await event.get_sender()
     sender_id = sender.id
     logging.info(f"Start Handler Triggered by User ID: {sender_id}")
-    logging.debug(f"Event Client Instance: {event.client}")
+    logging.info(f"Event Client Instance: {event.client}")
 
     await event.client.send_message(
         sender_id,
@@ -45,7 +45,7 @@ async def handle_help(event):
     sender = await event.get_sender()
     sender_id = sender.id
     logging.info(f"Help Handler Triggered by User ID: {sender_id}")
-    logging.debug(f"Event Client Instance: {event.client}")
+    logging.info(f"Event Client Instance: {event.client}")
 
     await event.client.send_message(
         sender_id,
@@ -71,7 +71,7 @@ async def handle_exit(event):
     sender = await event.get_sender()
     sender_id = sender.id
     logging.info(f"Exit Handler Triggered by User ID: {sender_id}")
-    logging.debug(f"Event Client Instance: {event.client}")
+    logging.info(f"Event Client Instance: {event.client}")
 
     await event.client.send_message(
         sender_id,
