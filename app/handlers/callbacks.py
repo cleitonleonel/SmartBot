@@ -1,8 +1,8 @@
 import logging
-from telethon import (
-    events
-)
+from telethon import events
+from typing import Any
 from app.utils.base_handler import ClientHandler
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -10,7 +10,7 @@ client = ClientHandler()
 
 
 @client.on(events.CallbackQuery)
-async def handle_callback(event):
+async def handle_callback(event: Any):
     """
     Handles callback queries triggered by inline button interactions.
 

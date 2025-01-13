@@ -1,6 +1,10 @@
 import logging
 from pathlib import Path
 from importlib import import_module
+from typing import Any, Iterable
+
+from telethon import TelegramClient
+
 from app.paths import get_handlers_path
 
 
@@ -14,7 +18,7 @@ class PluginLoader:
         plugins (dict): Configuration for the plugins to be loaded.
     """
 
-    def __init__(self, client, plugins=None):
+    def __init__(self, client: TelegramClient, plugins: dict | None=None) -> None:
         """
         Initialize the PluginLoader.
 
@@ -22,28 +26,30 @@ class PluginLoader:
             client (TelegramClient): The Telethon client instance.
             plugins (dict, optional): Plugin configuration. Defaults to an empty dictionary.
         """
-        self.client = client
-        self.plugins = plugins or {}
 
-    def load_plugins(self):
+        self.client: TelegramClient = client
+        self.plugins: dict = plugins or {}
+
+    def load_plugins(self) -> None:
         """
         Load and manage plugins based on the provided configuration.
 
         This method processes the plugin configuration, loads specified modules,
         and registers or removes handlers as needed.
         """
-        plugins = self.plugins.copy()
+
+        plugins: dict = self.plugins.copy()
         self._process_plugin_config(plugins)
 
         if not plugins.get("enabled", True):
             return
 
-        root = get_handlers_path(
+        root: str = get_handlers_path(
             plugins_dir=plugins["root"]
         )
-        include = plugins.get("include", [])
-        exclude = plugins.get("exclude", [])
-        count = 0
+        include: list[str] = plugins.get("include", [])
+        exclude: list[str] = plugins.get("exclude", [])
+        count: int = 0
 
         count = self._load_modules_from_path(root, include, count)
         count = self._unload_modules_from_path(root, exclude, count)
@@ -56,20 +62,21 @@ class PluginLoader:
         else:
             logging.warning(f'[{self.client.session}] No plugins loaded from "{root}"')
 
-    def _process_plugin_config(self, plugins):
+    def _process_plugin_config(self, plugins: dict) -> None:
         """
         Process and adjust the 'include' and 'exclude' configuration options.
 
         Args:
             plugins (dict): Plugin configuration.
         """
+
         for option in ["include", "exclude"]:
             if plugins.get(option, []):
                 plugins[option] = [
                     (i.split()[0], i.split()[1:] or None) for i in plugins[option]
                 ]
 
-    def _load_modules_from_path(self, root, include, count):
+    def _load_modules_from_path(self, root: str, include: list, count: int) -> int:
         """
         Load modules from a specified path and register their handlers.
 
@@ -81,6 +88,7 @@ class PluginLoader:
         Returns:
             int: Updated count of loaded plugins.
         """
+
         if not include:
             for path in sorted(Path(root.replace(".", "/")).rglob("*.py")):
                 module_path = '.'.join(path.parent.parts + (path.stem,))
@@ -93,7 +101,7 @@ class PluginLoader:
 
         return count
 
-    def _unload_modules_from_path(self, root, exclude, count):
+    def _unload_modules_from_path(self, root: str, exclude: list, count: int) -> int:
         """
         Unload modules and remove their handlers based on the configuration.
 
@@ -107,12 +115,12 @@ class PluginLoader:
         """
 
         for path, handlers in exclude:
-            module_path = root + "." + path
+            module_path: str = root + "." + path
             count = self._unload_module(module_path, handlers, count)
 
         return count
 
-    def _load_module(self, module_path, handlers=None):
+    def _load_module(self, module_path: str, handlers: Iterable | None=None) -> int:
         """
         Load a single module and register its handlers.
 
@@ -141,13 +149,13 @@ class PluginLoader:
 
         return self._register_handlers(module, handlers)
 
-    def _unload_module(self, module_path, handlers, count):
+    def _unload_module(self, module_path: str, handlers: Iterable, count: int) -> int:
         """
         Unload a module and deregister its handlers.
 
         Args:
             module_path (str): The module path to unload.
-            handlers (list): Specific handlers to deregister.
+            handlers (Iterable): Specific handlers to deregister.
             count (int): Current count of loaded plugins.
 
         Returns:
@@ -165,21 +173,22 @@ class PluginLoader:
 
         return self._deregister_handlers(module, handlers, count)
 
-    def _register_handlers(self, module, handlers):
+    def _register_handlers(self, module, handlers: Iterable) -> int:
         """
         Register handlers from a given module.
 
         Args:
             module (module): The Python module containing handlers.
-            handlers (list): List of handler names to register.
+            handlers (Iterable): List of handler names to register.
 
         Returns:
             int: Number of successfully registered handlers.
         """
+
         count = 0
         for name in handlers:
             try:
-                handler_group = getattr(module, name)
+                handler_group: Any = getattr(module, name)
                 if callable(handler_group) and getattr(handler_group, 'is_handler', False):
                     handler_info = getattr(handler_group, 'handler_info', {})
                     event = handler_info.get("event")
@@ -200,21 +209,22 @@ class PluginLoader:
 
         return count
 
-    def _deregister_handlers(self, module, handlers, count):
+    def _deregister_handlers(self, module, handlers: Iterable, count: int) -> int:
         """
         Deregister handlers from a given module.
 
         Args:
             module (module): The Python module containing handlers.
-            handlers (list): List of handler names to deregister.
+            handlers (Iterable): List of handler names to deregister.
             count (int): Current count of loaded plugins.
 
         Returns:
             int: Updated count of loaded plugins.
         """
+
         for name in handlers:
             try:
-                handler_group = getattr(module, name)
+                handler_group: Any = getattr(module, name)
                 if callable(handler_group) and getattr(handler_group, 'is_handler', False):
                     self.client.remove_event_handler(handler_group)
                     logging.info(

@@ -1,21 +1,22 @@
 import logging
-from telethon import (
-    events
-)
+from typing import Any
+from telethon import events
 from app.utils.base_handler import ClientHandler
+
 
 logging.basicConfig(level=logging.INFO)
 
-client = ClientHandler()
+client: ClientHandler = ClientHandler()
 
 
 @client.on(events.NewMessage(pattern='/text'))
-async def handle_text(event):
+async def handle_text(event: Any) -> None:
     """
     Handles the `/text` command by sending a greeting message.
 
     :param event: The event triggered by the `/text` command.
     """
+
     sender = await event.get_sender()
     sender_id = sender.id
     logging.info(f"Start Handler Triggered by User ID: {sender_id}")
