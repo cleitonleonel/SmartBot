@@ -12,12 +12,12 @@ from app.config import (
     API_HASH,
 )
 
-SESSION_PATH = os.path.join(
+SESSION_PATH: str = os.path.join(
     SESSIONS_DIR,
     APP_NAME
 )
 
-plugins = dict(
+plugins: dict[str, str | list[str]] = dict(
     root="plugins",
     include=[
         "commands.start handle_exit handle_start handle_help", "message"
@@ -27,7 +27,7 @@ plugins = dict(
 
 # plugins = dict(root="plugins")
 
-client = Client(
+client: Client = Client(
     bot_token=BOT_TOKEN,
     session=SESSION_PATH,
     api_id=API_ID,

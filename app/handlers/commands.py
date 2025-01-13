@@ -1,8 +1,6 @@
 import logging
-from telethon import (
-    events,
-    Button,
-)
+from typing import Any
+from telethon import events, Button
 from app.utils.base_handler import ClientHandler
 
 logging.basicConfig(level=logging.INFO)
@@ -11,7 +9,7 @@ client = ClientHandler()
 
 
 @client.on(events.NewMessage(pattern='/start'))
-async def handle_start(event):
+async def handle_start(event: Any):
     """
     Handles the `/start` command by sending a greeting message.
 
@@ -36,7 +34,7 @@ async def handle_start(event):
     )
 
 @client.on(events.NewMessage(pattern='/button'))
-async def handle_send_button(event):
+async def handle_send_button(event: Any):
     """
     Handles the `/button` command by sending a message with an inline button.
 
