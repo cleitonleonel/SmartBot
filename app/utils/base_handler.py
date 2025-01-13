@@ -1,17 +1,18 @@
-from typing import Callable
+from typing import Callable, Any
 
 class ClientHandler:
     """
     Decorator to register events on the Telegram client.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the handler decorator.
         """
+
         self.event = None
 
-    def on(self, event):
+    def on(self, event: Any) -> Callable:
         """
         Initializes the handler decorator with a specific event.
 
@@ -34,12 +35,13 @@ class ClientHandler:
 
         return decorator
 
-    def __call__(self, func: Callable):
+    def __call__(self, func: Callable) -> Callable:
         """
         Marks the function as a handler directly using the stored event.
 
         :param func: The function to be decorated as an event handler.
         :return: The decorated function with handler metadata.
         """
+
         return self.on(self.event)(func)
 

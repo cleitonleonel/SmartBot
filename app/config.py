@@ -1,3 +1,4 @@
+from typing import Final, Any
 import sys
 
 if sys.version_info >= (3, 11):
@@ -6,7 +7,7 @@ else:
     import toml
 
 
-def load_config(file_path):
+def load_config(file_path: str) -> dict[str, Any]:
     if sys.version_info >= (3, 11):
         with open(file_path, 'rb') as f:
             return tomllib.load(f)
@@ -16,12 +17,12 @@ def load_config(file_path):
 
 config = load_config('config.toml')
 
-API_ID = config['API']['ID']
-API_HASH = config['API']['HASH']
-BOT_TOKEN = config['API']['BOT_TOKEN']
-ADMIN_IDS = config['ADMIN']['IDS']
-APP_NAME = config['APPLICATION']['APP_NAME']
-APP_AUTHOR = config['APPLICATION']['APP_AUTHOR']
-APP_VERSION = config['APPLICATION']['APP_VERSION']
-DEVICE_MODEL = config['APPLICATION']['DEVICE_MODEL']
-SYSTEM_VERSION = config['APPLICATION']['SYSTEM_VERSION']
+API_ID: Final[str] = config['API']['ID']
+API_HASH: Final[str] = config['API']['HASH']
+BOT_TOKEN: Final[str] = config['API']['BOT_TOKEN']
+ADMIN_IDS: Final[str] = config['ADMIN']['IDS']
+APP_NAME: Final[str] = config['APPLICATION']['APP_NAME']
+APP_AUTHOR: Final[str] = config['APPLICATION']['APP_AUTHOR']
+APP_VERSION: Final[str] = config['APPLICATION']['APP_VERSION']
+DEVICE_MODEL: Final[str] = config['APPLICATION']['DEVICE_MODEL']
+SYSTEM_VERSION: Final[str] = config['APPLICATION']['SYSTEM_VERSION']

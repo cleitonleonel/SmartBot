@@ -3,7 +3,7 @@ name = "smartbot"
 version = "0.1.0"
 description = "Um boilerplate para bots com suporte a modularização e plugins inteligentes, inspirado nos smart plugins do Pyrogram."
 authors = [
-    {name = "cleiton",email = "cleiton.leonel@gmail.com"}
+    {name = "cleiton", email = "cleiton.leonel@gmail.com"}
 ]
 license = {text = "MIT"}
 readme = "README.md"

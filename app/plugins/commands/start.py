@@ -1,8 +1,8 @@
 import logging
-from telethon import (
-    events
-)
+from typing import Any
+from telethon import events
 from app.utils.base_handler import ClientHandler
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -10,12 +10,13 @@ client = ClientHandler()
 
 
 @client.on(events.NewMessage(pattern='/start'))
-async def handle_start(event):
+async def handle_start(event: Any):
     """
     Handles the `/start` command by sending a greeting message.
 
     :param event: The event triggered by the `/start` command.
     """
+
     sender = await event.get_sender()
     sender_id = sender.id
     logging.info(f"Start Handler Triggered by User ID: {sender_id}")
@@ -36,12 +37,13 @@ async def handle_start(event):
 
 
 @client.on(events.NewMessage(pattern='/help'))
-async def handle_help(event):
+async def handle_help(event: Any):
     """
     Handles the `/help` command by sending a greeting message.
 
     :param event: The event triggered by the `/help` command.
     """
+
     sender = await event.get_sender()
     sender_id = sender.id
     logging.info(f"Help Handler Triggered by User ID: {sender_id}")
@@ -62,7 +64,7 @@ async def handle_help(event):
 
 
 @client.on(events.NewMessage(pattern='/exit'))
-async def handle_exit(event):
+async def handle_exit(event: Any):
     """
     Handles the `/exit` command by sending a greeting message.
 
