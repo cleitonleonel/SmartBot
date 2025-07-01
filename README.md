@@ -75,10 +75,11 @@ python main.py
 Os módulos do bot estão localizados no diretório `handlers`. Cada módulo é carregado automaticamente e segue a estrutura de plugins inteligentes. Você pode criar novos módulos adicionando arquivos Python no diretório `handlers`.
 
 Exemplo de um plugin básico:
+
 ```python
 import logging
 from telethon import events
-from app.utils.base_handler import ClientHandler
+from smartbot.utils.handler import ClientHandler
 
 logging.basicConfig(level=logging.INFO)
 
@@ -122,9 +123,10 @@ plugins = dict(root="handlers")
 - Carregue apenas manipuladores definidos dentro de handlers.py e handlers0.py, nesta ordem:
 
 ```python
-from app.bot import Client
+from smartbot.bot import Client
+
 plugins = dict(
-    root="handlers",
+    root="handlers", # Diretório raiz dos manipuladores
     include=[
         "subfolder2.handlers2",
         "handlers0"
@@ -136,7 +138,8 @@ Client("my_account", plugins=plugins).start_service()
 - Carregue tudo, exceto os manipuladores dentro de handlers2.py:
 
 ```python
-from app.bot import Client
+from smartbot.bot import Client
+
 plugins = dict(
     root="handlers",
     exclude=["subfolder2.handlers2"]
@@ -147,7 +150,8 @@ Client("my_account", plugins=plugins).start_service()
 - Carregue apenas fn3, fn1 e fn2 (nesta ordem) de handlers1.py:
 
 ```python
-from app.bot import Client
+from smartbot.bot import Client
+
 plugins = dict(
     root="handlers",
     include=["subfolder1.handlers1 fn3 fn1 fn2"]

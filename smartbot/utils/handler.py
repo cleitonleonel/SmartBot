@@ -1,5 +1,6 @@
 from typing import Callable, Any
 
+
 class ClientHandler:
     """
     Decorator to register events on the Telegram client.

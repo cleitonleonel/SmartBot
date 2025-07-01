@@ -5,7 +5,7 @@ from typing import Any, Iterable
 
 from telethon import TelegramClient
 
-from app.paths import get_handlers_path
+from smartbot.paths import get_handlers_path
 
 
 class PluginLoader:
@@ -45,7 +45,7 @@ class PluginLoader:
             return
 
         root: str = get_handlers_path(
-            plugins_dir=plugins["root"]
+            plugins_dir=plugins.get("root")
         )
         include: list[str] = plugins.get("include", [])
         exclude: list[str] = plugins.get("exclude", [])

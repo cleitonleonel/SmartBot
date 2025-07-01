@@ -1,7 +1,7 @@
 import logging
 from telethon import events
 from typing import Any
-from app.utils.base_handler import ClientHandler
+from smartbot.utils.handler import ClientHandler
 
 
 logging.basicConfig(level=logging.INFO)
@@ -14,7 +14,7 @@ async def handle_callback(event: Any):
     """
     Handles callback queries triggered by inline button interactions.
 
-    :param event: The event triggered by an inline button interaction.
+    :param event: The event is triggered by an inline button interaction.
     """
     sender = await event.get_sender()
     sender_id = sender.id

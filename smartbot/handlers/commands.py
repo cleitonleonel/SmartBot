@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 from telethon import events, Button
-from app.utils.base_handler import ClientHandler
+from smartbot.utils.handler import ClientHandler
 
 logging.basicConfig(level=logging.INFO)
 
