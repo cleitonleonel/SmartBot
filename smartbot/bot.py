@@ -108,6 +108,10 @@ class UserSession(Generic[StateT]):
         """Clear all temporary context data."""
         self.context.clear()
 
+    def clear_user_data(self):
+        """Clear all persisten user data."""
+        self.data.clear()
+
     def set_data(self, key: str, value: Any):
         """
         Set persistent user data.
@@ -139,6 +143,7 @@ class UserSession(Generic[StateT]):
     def reset_to_idle(self):
         """Reset the session to idle state and clear temporary context."""
         self.state = self.state_class.IDLE
+        self.clear_user_data()
         self.clear_context()
         self.last_activity = datetime.now()
 
@@ -292,6 +297,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             sender_id (int): Telegram user ID
         """
         if sender_id in self.user_sessions:
+            self.drivers.get(sender_id, {}).clear()
             self.user_sessions[sender_id].reset_to_idle()
             logging.info(f"User {sender_id} session reset to idle")
 
@@ -344,7 +350,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
                 await asyncio.sleep(300)
 
     async def ask_user(self, sender_id: int, question: str, state,
-                       context: Dict = None, **kwargs) -> None:
+                       context: Dict = None, **kwargs) -> Any:
         """
         Ask a question a user and set their conversation state to wait for a response.
         Args:
@@ -354,8 +360,8 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             context (Dict, optional): Additional context data
             **kwargs: Additional arguments for send_message
         """
-        await self.send_message(sender_id, question, **kwargs)
         self.set_user_state(sender_id, state, context)
+        return await self.send_message(sender_id, question, **kwargs)
 
     async def handle_user_response(self, event, expected_state) -> bool:
         """
@@ -544,7 +550,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         Args:
             data (dict, optional): Bot information data
         """
-        logo_path = self.config.get('logo', 'src/media/logo.png')
+        logo_path = self.config.get('logo', 'assets/SmartBot.png')
         about = self.config.get('about')
         description = self.config.get('description')
 
