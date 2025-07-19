@@ -4,7 +4,7 @@ from typing import Callable, Awaitable
 from collections import defaultdict
 from telethon.events import CallbackQuery
 from smartbot.utils.context import (
-    get_user_state,
+    get_user_driver,
     DELETE_KEY,
     MENU_KEY
 )
@@ -22,9 +22,9 @@ def with_stack_and_cleanup(push: bool = True, cleanup: bool | None = None):
         @functools.wraps(handler)
         async def wrapper(event):
             sender = await event.get_sender()
-            user_id = sender.id
+            sender_id = sender.id
 
-            user_data = get_user_state(event)
+            user_data = get_user_driver(event)
             delete_queue = user_data[DELETE_KEY]
 
             message = None
@@ -33,9 +33,9 @@ def with_stack_and_cleanup(push: bool = True, cleanup: bool | None = None):
 
             if should_cleanup and delete_queue:
                 try:
-                    await event.client.delete_messages(user_id, delete_queue)
+                    await event.client.delete_messages(sender_id, delete_queue)
                 except Exception as e:
-                    logging.warning(f"[{user_id}] Failed to delete previous messages: {e}")
+                    logging.warning(f"[{sender_id}] Failed to delete previous messages: {e}")
                 delete_queue.clear()
 
             if is_callback:
@@ -47,7 +47,7 @@ def with_stack_and_cleanup(push: bool = True, cleanup: bool | None = None):
                 try:
                     user_data[MENU_KEY].append((message.text, message.reply_markup))
                 except Exception as e:
-                    logging.warning(f"[{user_id}] Failed to push to stack: {e}")
+                    logging.warning(f"[{sender_id}] Failed to push to stack: {e}")
 
             await handler(event)
 
@@ -56,7 +56,7 @@ def with_stack_and_cleanup(push: bool = True, cleanup: bool | None = None):
     return decorator
 
 
-async def clear_temp_messages(event, user_id: int):
+async def clear_temp_messages(event, sender_id: int):
     """
     Clears all temporary messages for a given user by deleting
     the message IDs stored in the delete queue.
@@ -64,22 +64,22 @@ async def clear_temp_messages(event, user_id: int):
     Initializes the user driver context if it doesn't exist.
 
     :param event: The Telegram event instance.
-    :param user_id: The Telegram user ID whose messages should be deleted.
+    :param sender_id: The Telegram user ID whose messages should be deleted.
     """
-    if not isinstance(event.client.drivers.get(user_id), dict):
-        event.client.drivers[user_id] = defaultdict(list)
+    if not isinstance(event.client.drivers.get(sender_id), dict):
+        event.client.drivers[sender_id] = defaultdict(list)
 
-    user_data = event.client.drivers[user_id]
+    user_data = event.client.drivers[sender_id]
     delete_queue = user_data[DELETE_KEY]
 
     if not delete_queue:
         return
 
     try:
-        await event.client.delete_messages(user_id, delete_queue)
+        await event.client.delete_messages(sender_id, delete_queue)
         delete_queue.clear()
     except Exception as e:
-        logging.warning(f"Error while clearing messages for {user_id}: {e}")
+        logging.warning(f"Error while clearing messages for {sender_id}: {e}")
 
 
 async def go_back(event):
@@ -92,12 +92,12 @@ async def go_back(event):
     :param event: The incoming event (either CallbackQuery or NewMessage).
     """
     sender = await event.get_sender()
-    user_id = sender.id
+    sender_id = sender.id
 
-    if not isinstance(event.client.drivers.get(user_id), dict):
-        event.client.drivers[user_id] = defaultdict(list)
+    if not isinstance(event.client.drivers.get(sender_id), dict):
+        event.client.drivers[sender_id] = defaultdict(list)
 
-    user_data = event.client.drivers[user_id]
+    user_data = event.client.drivers[sender_id]
     stack = user_data[MENU_KEY]
 
     if stack:

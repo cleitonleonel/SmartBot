@@ -24,6 +24,10 @@ from telethon.tl.functions.photos import (
 )
 from typing import TypeVar, Generic, Type, Dict, Any
 from smartbot.plugin_loader import PluginLoader
+from smartbot.utils.context import (
+    DELETE_KEY,
+    MENU_KEY
+)
 from enum import Enum
 from datetime import datetime, timedelta
 
@@ -424,6 +428,20 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             The result of the send_message operation
         """
         return await super().send_message(chat_id, message, **kwargs)
+
+    async def just_answer(self, event, message: str = '', **kwargs: Any):
+        """
+        Answer a callback query with a message and remove the last menu from the stack.
+        Args:
+            event: The event that triggered the callback query
+            message (str): The message to send as an answer
+            **kwargs (Any): Additional arguments for the answer (e.g., alert, buttons)
+        Returns:
+            The result of the answer operation
+        """
+        sender_id = event.sender_id
+        self.drivers.get(sender_id, {}).get(MENU_KEY, []).pop(-1)
+        return await event.answer(message, **kwargs)
 
     async def remove_messages(self, chat_id, message_ids: list[int] = None):
         """

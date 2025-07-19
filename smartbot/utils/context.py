@@ -4,9 +4,9 @@ DELETE_KEY = "delete_queue"
 MENU_KEY = "menu_stack"
 
 
-def get_user_state(event) -> dict:
+def get_user_driver(event) -> dict:
     """
-    Returns the user's state dictionary (driver).
+    Returns the user's dictionary (driver).
     Initializes it if it doesn't exist yet.
     """
     user_id = event.sender_id if hasattr(event, "sender_id") else event.chat_id
