@@ -440,7 +440,10 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             The result of the answer operation
         """
         sender_id = event.sender_id
-        self.drivers.get(sender_id, {}).get(MENU_KEY, []).pop(-1)
+        current_drivers = self.drivers.get(sender_id, {}).get(MENU_KEY, [])
+        if current_drivers:
+            current_drivers.pop(-1)
+
         return await event.answer(message, **kwargs)
 
     async def remove_messages(self, chat_id, message_ids: list[int] = None):
