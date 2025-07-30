@@ -1,3 +1,4 @@
+import os
 import asyncio
 import logging
 from telethon import (
@@ -29,6 +30,7 @@ from smartbot.utils.context import (
     MENU_KEY
 )
 from enum import Enum
+from importlib import resources
 from datetime import datetime, timedelta
 
 logging.basicConfig(
@@ -571,13 +573,24 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         Args:
             data (dict, optional): Bot information data
         """
-        logo_path = self.config.get('logo', 'assets/SmartBot.png')
+        if data is not None:
+            self.config.update(data)
+
+        logo_path = self.config.get('logo')
+        if not logo_path:
+            logo_path = resources.files('smartbot') / 'assets' / 'SmartBot.png'
+
+        if not os.path.exists(logo_path):
+            logging.error(f'Logo file not found at {logo_path}. Cannot update profile.')
+            return
+
         about = self.config.get('about')
         description = self.config.get('description')
-
+        force_update = self.config.get('force_update', False)
         bot_info = await self.get_bot_info()
-        if not bot_info:
-            logging.error('Bot info not found. Cannot update profile.')
+
+        if force_update or not bot_info.about:
+            logging.error('Force update is enabled. Updating bot profile...')
             photo_id, access_hash = await self.upload_photo(
                 photo_path=logo_path
             )
@@ -635,7 +648,10 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             )
             plugin_loader.load_plugins()
             await self.register_commands()
-            await self.set_bot_info()
+
+            if self.config is not None:
+                await self.set_bot_info()
+
             logging.info('Starting Telegram bot!')
             await asyncio.gather(
                 self.run_until_disconnected(),

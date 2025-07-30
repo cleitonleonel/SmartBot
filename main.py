@@ -65,7 +65,8 @@ profile: dict[str, str] = dict(
     description=(
         "🤖 Acesse serviços e recursos com um bot modular e simples no Telegram."
     ),
-    about="Base para criação de bots com SmartBot."
+    about="Base para criação de bots com SmartBot.",
+    # force_update=True, # Force update the bot profile on startup
 )
 
 client: Client = Client(

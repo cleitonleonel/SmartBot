@@ -12,6 +12,12 @@ dependencies = [
     "telethon (>=1.38.1,<2.0.0)",
     "toml (>=0.10.2,<0.11.0)"
 ]
+packages = [
+    { include = "smartbot" }
+]
+include = [
+    "smartbot/assets/*.png"
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
