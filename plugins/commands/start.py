@@ -16,7 +16,7 @@ async def handle_start(event: Any):
     """
     Handles the `/start` command by sending a greeting message.
 
-    :param event: The event triggered by the `/start` command.
+    :param event: The event is triggered by the `/start` command.
     """
 
     sender = await event.get_sender()

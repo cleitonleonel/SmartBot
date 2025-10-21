@@ -197,6 +197,40 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         self.user_sessions: Dict[int, Any] = {}
         self.conversation_handlers = {}
 
+    async def ensure_ready(self, timeout: int = 15) -> None:
+        """
+        Waits for the Telegram client to be ready within a specified timeout.
+
+        This asynchronous method continuously checks if the Telegram client is connected
+        and authorized. It logs information and warnings during the process. If the client
+        does not become ready within the specified timeout period, the waiting is aborted.
+
+        Parameters:
+        timeout (int): The maximum time, in seconds, to wait for the client to be ready (default is 15).
+
+        Raises:
+        None
+
+        Returns:
+        None
+        """
+        logging.info("Waiting for Telegram client to be ready...")
+        start_time = asyncio.get_event_loop().time()
+
+        while True:
+            try:
+                if self.is_connected() and await self.is_user_authorized():
+                    logging.info("Telegram client is ready!")
+                    return
+            except Exception as e:
+                logging.warning(f"Waiting for client readiness: {e}")
+
+            if asyncio.get_event_loop().time() - start_time > timeout:
+                logging.warning("Timeout reached while waiting for client readiness.")
+                break
+
+            await asyncio.sleep(1)
+
     def get_user_session(self, sender_id: int):
         """
         Get or create a user session for the given sender ID.
@@ -313,7 +347,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         Args:
             sender_id (int): Telegram user ID
         Returns:
-            bool: True if user is in conversation, False otherwise
+            bool: True if the user is in conversation, False otherwise
         """
         state = self.get_user_state(sender_id)
         idle_state = self.conversation_state.IDLE
@@ -641,7 +675,11 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         Handles connection errors by attempting to reconnect automatically.
         """
         try:
+            logging.info("Connecting to Telegram...")
             await self.start(bot_token=self.bot_token)
+
+            await self.ensure_ready()
+
             plugin_loader: PluginLoader = PluginLoader(
                 self,
                 self.plugins
@@ -652,7 +690,9 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             if self.config is not None:
                 await self.set_bot_info()
 
-            logging.info('Starting Telegram bot!')
+            logging.info("All plugins and handlers loaded successfully!")
+            logging.info("Starting Telegram bot!")
+
             await asyncio.gather(
                 self.run_until_disconnected(),
                 self.keep_alive(),
@@ -660,7 +700,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             )
 
         except ConnectionError:
-            logging.error('Failed to connect to Telegram.')
+            logging.error("Failed to connect to Telegram.")
             await asyncio.sleep(5)
             await self.run()
 
