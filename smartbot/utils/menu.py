@@ -2,11 +2,13 @@ import logging
 import functools
 from typing import Callable, Awaitable
 from collections import defaultdict
+from telethon import Button
 from telethon.events import CallbackQuery
 from smartbot.utils.context import (
     get_user_driver,
     DELETE_KEY,
-    MENU_KEY
+    MENU_KEY,
+    BACK_TO_HOME
 )
 
 
@@ -105,6 +107,15 @@ async def go_back(event):
 
         if isinstance(event, CallbackQuery.Event):
             try:
+                if text.startswith("/"):
+                    await event.delete()
+                    main_button = Button.text("📚 Menu Principal", resize=True)
+                    msg = await event.respond(
+                        BACK_TO_HOME,
+                        buttons=main_button
+                    )
+                    user_data[DELETE_KEY].append(msg.id)
+                    return None
                 await event.edit(text, buttons=buttons)
             except Exception:
                 msg = await event.respond(text, buttons=buttons)

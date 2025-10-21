@@ -2,6 +2,16 @@ from collections import defaultdict
 
 DELETE_KEY = "delete_queue"
 MENU_KEY = "menu_stack"
+BACK_TO_HOME = """
+🏠 **Você voltou ao menu inicial!**
+
+✨ Dica: a qualquer momento, você pode:
+• Digitar **/start** para reiniciar o bot  
+• Usar o **menu de comandos** abaixo  
+• Ou enviar manualmente qualquer comando da lista disponível
+
+🔍 Explore as opções e continue interagindo com o bot!
+"""
 
 
 def get_user_driver(event) -> dict:
