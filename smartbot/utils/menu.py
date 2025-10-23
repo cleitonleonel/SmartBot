@@ -17,7 +17,7 @@ def with_stack_and_cleanup(push: bool = True, cleanup: bool | None = None):
     Decorator to manage UI stack and clean up temporary messages.
 
     :param push: Whether to push the current message to the user's menu stack.
-    :param cleanup: True = always clean, False = never clean, None = only if CallbackQuery.
+    :param cleanup: True = always clean, False = never clean, None = only of CallbackQuery.
     """
 
     def decorator(handler: Callable[[any], Awaitable[None]]):

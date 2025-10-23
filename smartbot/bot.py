@@ -12,7 +12,11 @@ from telethon.errors import (
 from telethon.tl.types import (
     BotCommandScopePeer,
     BotCommandScopeDefault,
-    InputPhoto
+    InputPhoto,
+    InputMediaGeoPoint,
+    InputMediaGeoLive,
+    InputGeoPoint,
+    InputGeoPointEmpty
 )
 from telethon.tl.functions.bots import (
     SetBotCommandsRequest,
@@ -26,7 +30,7 @@ from telethon.tl.functions.photos import (
 from typing import TypeVar, Generic, Type, Dict, Any
 from smartbot.plugin_loader import PluginLoader
 from smartbot.utils.context import (
-    DELETE_KEY,
+    # DELETE_KEY,
     MENU_KEY
 )
 from enum import Enum
@@ -53,6 +57,7 @@ class UserSession(Generic[StateT]):
     This class handles user-specific data including conversation state,
     temporary context, persistent data, and session timeout management.
     """
+
     def __init__(self, user_id: int, state_class: Type[StateT]):
         """
         Initialize a new user session.
@@ -160,6 +165,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
     This client extends TelegramClient with additional functionalities for managing
     user conversations, session states, and persistent data storage.
     """
+
     def __init__(
             self,
             bot_token: str = "",
@@ -389,10 +395,16 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
                 logging.error(f"Error in session cleanup: {e}")
                 await asyncio.sleep(300)
 
-    async def ask_user(self, sender_id: int, question: str, state,
-                       context: Dict = None, **kwargs) -> Any:
+    async def ask_user(
+            self,
+            sender_id: int,
+            question: str,
+            state,
+            context: Dict = None,
+            **kwargs
+    ) -> Any:
         """
-        Ask a question a user and set their conversation state to wait for a response.
+        Ask a question to a user and set their conversation state to wait for a response.
         Args:
             sender_id (int): Telegram user ID
             question (str): Question text to send
@@ -464,6 +476,123 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             The result of the send_message operation
         """
         return await super().send_message(chat_id, message, **kwargs)
+
+    async def send_location(
+            self,
+            chat_id: Any,
+            caption: str = '',
+            lat: int = None,
+            long: int = None,
+            **kwargs: Any
+    ):
+        """
+        Sends a location as a live geographic point to the specified chat.
+
+        This asynchronous method sends a live location to a specific chat,
+        allowing users in the chat to view and interact with the geographic
+        point. The latitude and longitude must be provided to define the
+        geo point to be sent. An optional caption can accompany the location.
+
+        Parameters:
+            chat_id: Any
+                The unique identifier or username of the target chat.
+            caption: str, optional
+                An optional caption text to include with the geographic point.
+            lat: int, optional
+                Latitude of the geographic point to send. Required if sending a location.
+            long: int, optional
+                Longitude of the geographic point to send. Required if sending a location.
+            **kwargs: Any
+                Additional optional arguments to provide further customization options
+                for the location message.
+
+        Returns:
+            Any
+                Returns the result from the superclass `send_file` method upon
+                successful location transmission.
+
+        Raises:
+            Any errors raised by the superclass `send_file` method during location
+            message dispatch.
+        """
+        geo_live = InputMediaGeoPoint(
+            geo_point=InputGeoPoint(
+                lat=lat,
+                long=long
+            )
+        )
+        return await super().send_file(
+            chat_id,
+            file=geo_live,
+            caption=caption
+        )
+
+    async def send_live_location(
+            self,
+            chat_id: Any,
+            lat: float = None,
+            long: float = None,
+            proximity_notification_radius: Any = None
+    ):
+        """
+        Sends a live location message to a specified chat.
+
+        This method asynchronously sends a live location to the given chat using
+        geographical coordinates. The live location includes an optional proximity
+        notification radius and is set to expire after a fixed time period.
+
+        Parameters:
+            chat_id (Any): Identifier for the target chat. Could be a user ID, group ID, or
+                other recognizable identification.
+            lat (float, optional): Latitude of the live location. Default is None.
+            long (float, optional): Longitude of the live location. Default is None.
+            proximity_notification_radius (Any, optional): Radius for proximity notifications,
+                if enabled. Default is None.
+
+        Returns:
+            Coroutine: A coroutine that resolves to the result of the file-sending action.
+        """
+        geo_live = InputMediaGeoLive(
+            geo_point=InputGeoPoint(
+                lat=lat,
+                long=long
+            ),
+            period=60 * 30,
+            proximity_notification_radius=proximity_notification_radius
+        )
+        return await super().send_file(
+            chat_id,
+            file=geo_live,
+            caption="📍 localização ao vivo..."
+        )
+
+    async def stopping_live_location(self, chat_id: int, message_id: int = None):
+        """
+        Stops the live location in a chat message.
+
+        This method allows the user to stop sharing live location data in a previously
+        sent message within a chat. The location is replaced with a static marker.
+
+        Parameters:
+        chat_id (int): Unique identifier for the target chat or username of the target
+            channel (in the format @channelusername).
+        message_id (int, optional): Identifier of the message to stop live location
+            sharing for. Defaults to None.
+
+        Returns:
+        Coroutine: A coroutine object representing the result of the message edit
+        operation.
+        """
+        geo_live = InputMediaGeoLive(
+            geo_point=InputGeoPointEmpty(),
+            stopped=True
+        )
+
+        return await super().edit_message(
+            chat_id,
+            message_id,
+            file=geo_live
+        )
 
     async def just_answer(self, event, message: str = '', **kwargs: Any):
         """
