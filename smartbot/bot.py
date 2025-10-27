@@ -353,7 +353,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         Args:
             sender_id (int): Telegram user ID
         Returns:
-            bool: True if the user is in conversation, False otherwise
+            bool: True if user is in conversation, False otherwise
         """
         state = self.get_user_state(sender_id)
         idle_state = self.conversation_state.IDLE
@@ -395,16 +395,10 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
                 logging.error(f"Error in session cleanup: {e}")
                 await asyncio.sleep(300)
 
-    async def ask_user(
-            self,
-            sender_id: int,
-            question: str,
-            state,
-            context: Dict = None,
-            **kwargs
-    ) -> Any:
+    async def ask_user(self, sender_id: int, question: str, state,
+                       context: Dict = None, **kwargs) -> Any:
         """
-        Ask a question to a user and set their conversation state to wait for a response.
+        Ask a question a user and set their conversation state to wait for a response.
         Args:
             sender_id (int): Telegram user ID
             question (str): Question text to send
@@ -486,34 +480,29 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             **kwargs: Any
     ):
         """
-        Sends a location as a live geographic point to the specified chat.
-
-        This asynchronous method sends a live location to a specific chat,
-        allowing users in the chat to view and interact with the geographic
-        point. The latitude and longitude must be provided to define the
-        geo point to be sent. An optional caption can accompany the location.
+        Sends a location message to a specific chat. This function allows the user to send
+        a message containing latitude and longitude coordinates along with optional text
+        to a designated chat.
 
         Parameters:
-            chat_id: Any
-                The unique identifier or username of the target chat.
-            caption: str, optional
-                An optional caption text to include with the geographic point.
-            lat: int, optional
-                Latitude of the geographic point to send. Required if sending a location.
-            long: int, optional
-                Longitude of the geographic point to send. Required if sending a location.
-            **kwargs: Any
-                Additional optional arguments to provide further customization options
-                for the location message.
+        chat_id: Any
+            The unique identifier for the target chat where the location message will be sent.
+        caption: str
+            Optional text message to accompany the location. Default is an empty string.
+        lat: int
+            Latitude of the location in degrees. Default is None.
+        long: int
+            Longitude of the location in degrees. Default is None.
+        kwargs: Any
+            Additional optional parameters for customization.
 
         Returns:
-            Any
-                Returns the result from the superclass `send_file` method upon
-                successful location transmission.
+        None
 
         Raises:
-            Any errors raised by the superclass `send_file` method during location
-            message dispatch.
+        Exception
+            Raised if the process of sending the location message fails due to application-level
+            issues or external errors in the chat system.
         """
         geo_live = InputMediaGeoPoint(
             geo_point=InputGeoPoint(
@@ -524,7 +513,8 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         return await super().send_file(
             chat_id,
             file=geo_live,
-            caption=caption
+            caption=caption,
+            **kwargs
         )
 
     async def send_live_location(
@@ -532,25 +522,31 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             chat_id: Any,
             lat: float = None,
             long: float = None,
-            proximity_notification_radius: Any = None
+            proximity_notification_radius: Any = None,
+            **kwargs: Any
     ):
         """
-        Sends a live location message to a specified chat.
-
-        This method asynchronously sends a live location to the given chat using
-        geographical coordinates. The live location includes an optional proximity
-        notification radius and is set to expire after a fixed time period.
+        Sends a live location to a specified chat. The function allows specifying latitude and longitude coordinates for the
+        live location update, along with an optional proximity notification radius.
 
         Parameters:
-            chat_id (Any): Identifier for the target chat. Could be a user ID, group ID, or
-                other recognizable identification.
-            lat (float, optional): Latitude of the live location. Default is None.
-            long (float, optional): Longitude of the live location. Default is None.
-            proximity_notification_radius (Any, optional): Radius for proximity notifications,
-                if enabled. Default is None.
+            chat_id (int | str): Unique identifier for the target chat or username of
+                the target channel.
+            lat (float, optional): Latitude of the location.
+            long (float, optional): Longitude of the location.
+            proximity_notification_radius (int, optional): Distance in meters for
+                proximity alerts. The alert will be sent when another user is within
+                this radius.
+            kwargs: Any
+            Additional optional parameters for customization.
 
         Returns:
-            Coroutine: A coroutine that resolves to the result of the file-sending action.
+            Coroutine: A coroutine representing the result of sending the live location.
+
+        Raises:
+            Any exceptions raised by the call to the parent send_file method or
+            exceptions related to invalid input data.
+
         """
         geo_live = InputMediaGeoLive(
             geo_point=InputGeoPoint(
@@ -563,32 +559,36 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         return await super().send_file(
             chat_id,
             file=geo_live,
-            caption="📍 localização ao vivo..."
+            caption="📍 localização ao vivo...",
+            **kwargs
         )
 
     async def stopping_live_location(self, chat_id: int, message_id: int = None):
         """
-        Stops the live location in a chat message.
+        Stops an ongoing live location in the specified chat and message.
 
-        This method allows the user to stop sharing live location data in a previously
-        sent message within a chat. The location is replaced with a static marker.
+        The method stops sharing a live location for a specified message in a chat.
+        It updates the message with a stopped state for the live location marker.
 
         Parameters:
-        chat_id (int): Unique identifier for the target chat or username of the target
-            channel (in the format @channelusername).
-        message_id (int, optional): Identifier of the message to stop live location
-            sharing for. Defaults to None.
+        - chat_id (int): Unique identifier for the target chat.
+        - message_id (int): Identifier of the message with the live location to be stopped.
 
         Returns:
-        Coroutine: A coroutine object representing the result of the message edit
-        operation.
+        - Any: The result of the live location stops operation.
+
         """
         geo_live = InputMediaGeoLive(
             geo_point=InputGeoPointEmpty(),
             stopped=True
         )
 
-        return await super().edit_message(
+        """return await self.bot.send_file(
+            chat_id,
+            file=geo_live
+        )"""
+
+        await super().edit_message(
             chat_id,
             message_id,
             file=geo_live
@@ -804,9 +804,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         Handles connection errors by attempting to reconnect automatically.
         """
         try:
-            logging.info("Connecting to Telegram...")
             await self.start(bot_token=self.bot_token)
-
             await self.ensure_ready()
 
             plugin_loader: PluginLoader = PluginLoader(
@@ -819,9 +817,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             if self.config is not None:
                 await self.set_bot_info()
 
-            logging.info("All plugins and handlers loaded successfully!")
-            logging.info("Starting Telegram bot!")
-
+            logging.info('Starting Telegram bot!')
             await asyncio.gather(
                 self.run_until_disconnected(),
                 self.keep_alive(),
@@ -829,7 +825,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             )
 
         except ConnectionError:
-            logging.error("Failed to connect to Telegram.")
+            logging.error('Failed to connect to Telegram.')
             await asyncio.sleep(5)
             await self.run()
 
