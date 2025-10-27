@@ -4,6 +4,11 @@ from typing import Callable, Awaitable
 from collections import defaultdict
 from telethon import Button
 from telethon.events import CallbackQuery
+from telethon.tl.types import (
+    MessageMediaGeo,
+    MessageMediaPhoto,
+    MessageMediaDocument
+)
 from smartbot.utils.context import (
     get_user_driver,
     DELETE_KEY,
@@ -17,7 +22,7 @@ def with_stack_and_cleanup(push: bool = True, cleanup: bool | None = None):
     Decorator to manage UI stack and clean up temporary messages.
 
     :param push: Whether to push the current message to the user's menu stack.
-    :param cleanup: True = always clean, False = never clean, None = only of CallbackQuery.
+    :param cleanup: True = always clean, False = never clean, None = only if CallbackQuery.
     """
 
     def decorator(handler: Callable[[any], Awaitable[None]]):
@@ -95,6 +100,7 @@ async def go_back(event):
     """
     sender = await event.get_sender()
     sender_id = sender.id
+    msg_recv = await event.get_message()
 
     if not isinstance(event.client.drivers.get(sender_id), dict):
         event.client.drivers[sender_id] = defaultdict(list)
@@ -116,8 +122,14 @@ async def go_back(event):
                     )
                     user_data[DELETE_KEY].append(msg.id)
                     return None
+                elif msg_recv.media:
+                    if isinstance(msg_recv.media, MessageMediaGeo):
+                        await event.delete()
+                        return await event.respond(text, buttons=buttons)
+
                 await event.edit(text, buttons=buttons)
-            except Exception:
+            except Exception as e:
+                logging.warning(f"Error while editing message for {sender_id}: {e}")
                 msg = await event.respond(text, buttons=buttons)
                 user_data[DELETE_KEY].append(msg.id)
         else:
