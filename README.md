@@ -12,7 +12,7 @@
 
 <p align="center">
 <a href="https://github.com/cleitonleonel/SmartBot">
-  <img src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-green" alt="Supported Python Versions"/>
+  <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12-green" alt="Supported Python Versions"/>
 </a>
 </p>
 
@@ -23,7 +23,7 @@
 ## 🚀 Instalação
 
 ### Requisitos
-- Python 3.9 ou superior
+- Python 3.12 ou superior
 - Poetry (opcional, mas recomendado)
 
 ### Instalando com Poetry

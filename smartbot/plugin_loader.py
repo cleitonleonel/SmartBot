@@ -62,6 +62,16 @@ class PluginLoader:
         else:
             logging.warning(f'[{self.client.session}] No plugins loaded from "{root}"')
 
+    def reload_plugins(self) -> None:
+        """
+        Reloads all registered plugins by clearing current handlers and loading again.
+        """
+        logging.info(f'[{self.client.session}] Reloading plugins...')
+        for callback, _ in list(self.client.list_event_handlers()):
+            if getattr(callback, 'is_handler', False):
+                self.client.remove_event_handler(callback)
+        self.load_plugins()
+
     def _process_plugin_config(self, plugins: dict) -> None:
         """
         Process and adjust the 'include' and 'exclude' configuration options.
@@ -186,10 +196,19 @@ class PluginLoader:
         """
 
         count = 0
+        existing_callbacks = [cb for cb, _ in self.client.list_event_handlers()]
+
         for name in handlers:
             try:
                 handler_group: Any = getattr(module, name)
                 if callable(handler_group) and getattr(handler_group, 'is_handler', False):
+                    if handler_group in existing_callbacks:
+                        logging.debug(
+                            f'[{self.client.session}] [LOAD] Handler "{name}" '
+                            f'from "{module.__name__}" already registered. Skipping.'
+                        )
+                        continue
+
                     handler_info = getattr(handler_group, 'handler_info', {})
                     event = handler_info.get("event")
 

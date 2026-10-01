@@ -21,11 +21,9 @@ async def handle_text(event: Any) -> None:
     sender_id = sender.id
     logging.info(f"Start Handler Triggered by User ID: {sender_id}")
     logging.info(f"Event Client Instance: {event.client}")
-    logging.info(f"User Data Client: {event.client.drivers}")
-    event.client.drivers["user_data"] = {}
-    event.client.drivers["user_data"]["id"] = sender_id
-    event.client.drivers["user_data"]["name"] = sender.first_name
-    logging.info(f"User Data Client: {event.client.drivers}")
+    session = event.client.get_user_session(sender_id)
+    session.set_data("name", sender.first_name)
+    logging.info(f"User Session Data: {session.data}")
 
     response = await event.client.send_message(
         sender_id,

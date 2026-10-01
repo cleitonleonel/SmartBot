@@ -113,7 +113,7 @@ async def go_back(event):
 
         if isinstance(event, CallbackQuery.Event):
             try:
-                if text.startswith("/"):
+                if text and text.startswith("/"):
                     await event.delete()
                     main_button = Button.text("📚 Menu Principal", resize=True)
                     msg = await event.respond(

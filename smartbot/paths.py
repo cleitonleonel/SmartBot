@@ -16,8 +16,8 @@ def get_session_path(client_id: int) -> str:
     return os.path.join(CLIENTS_DIR, f'{client_id}')
 
 
-def get_handlers_path(plugins_dir: str | None=None) -> str:
+def get_handlers_path(plugins_dir: str | None = None) -> str:
     if plugins_dir:
-        return ".".join(plugins_dir.split(os.path.sep))
+        return plugins_dir.replace("/", ".").replace("\\", ".")
 
-    return ".".join(HANDLER_DIR.split(os.path.sep))
+    return HANDLER_DIR.replace("/", ".").replace("\\", ".")

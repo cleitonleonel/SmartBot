@@ -193,8 +193,8 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         self.bot_token = bot_token
         self.plugins = plugins
         self.config = config
-        self.admin_ids = admin_ids
-        self.commands = commands
+        self.admin_ids = admin_ids or []
+        self.commands = commands or {}
         self.conversation_state = conversation_state
         self.user_session = user_session
         self.drivers = {}
@@ -221,7 +221,11 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         None
         """
         logging.info("Waiting for Telegram client to be ready...")
-        start_time = asyncio.get_event_loop().time()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.get_event_loop()
+        start_time = loop.time()
 
         while True:
             try:
@@ -231,7 +235,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             except Exception as e:
                 logging.warning(f"Waiting for client readiness: {e}")
 
-            if asyncio.get_event_loop().time() - start_time > timeout:
+            if loop.time() - start_time > timeout:
                 logging.warning("Timeout reached while waiting for client readiness.")
                 break
 
@@ -451,13 +455,15 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         Returns:
             The input entity of the first valid admin ID found, or None if no valid admin ID exists.
         """
-        peer = None
         for entity in self.admin_ids:
             try:
                 peer = await super().get_input_entity(entity)
-            finally:
                 if peer:
                     return peer
+            except Exception as e:
+                print(f"[WARN] Failed to get entity {entity}: {e}")
+
+        return None
 
     async def send_message(self, chat_id: Any, message: str = '', **kwargs: Any):
         """
@@ -475,8 +481,8 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             self,
             chat_id: Any,
             caption: str = '',
-            lat: int = None,
-            long: int = None,
+            lat: float = None,
+            long: float = None,
             **kwargs: Any
     ):
         """
@@ -563,7 +569,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             **kwargs
         )
 
-    async def stopping_live_location(self, chat_id: int, message_id: int = None):
+    async def stop_live_location(self, chat_id: int, message_id: int = None):
         """
         Stops an ongoing live location in the specified chat and message.
 
@@ -583,16 +589,14 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
             stopped=True
         )
 
-        """return await self.bot.send_file(
-            chat_id,
-            file=geo_live
-        )"""
-
-        await super().edit_message(
+        return await super().edit_message(
             chat_id,
             message_id,
             file=geo_live
         )
+
+    # Alias for backward compatibility
+    stopping_live_location = stop_live_location
 
     async def just_answer(self, event, message: str = '', **kwargs: Any):
         """
@@ -697,7 +701,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
 
     async def upload_photo(self, photo_path):
         """
-        Upload a photo to be used as bot profile picture.
+        Upload a photo to be used as a bot profile picture.
         Args:
             photo_path: Path to the photo file
         Returns:
@@ -753,7 +757,7 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         bot_info = await self.get_bot_info()
 
         if force_update or not bot_info.about:
-            logging.error('Force update is enabled. Updating bot profile...')
+            logging.info('Force update is enabled. Updating bot profile...')
             photo_id, access_hash = await self.upload_photo(
                 photo_path=logo_path
             )
@@ -803,31 +807,33 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         Start the bot, load event handlers, and manage its lifecycle.
         Handles connection errors by attempting to reconnect automatically.
         """
-        try:
-            await self.start(bot_token=self.bot_token)
-            await self.ensure_ready()
+        while True:
+            try:
+                await self.start(bot_token=self.bot_token)
+                await self.ensure_ready()
 
-            plugin_loader: PluginLoader = PluginLoader(
-                self,
-                self.plugins
-            )
-            plugin_loader.load_plugins()
-            await self.register_commands()
+                if not getattr(self, '_plugins_loaded', False):
+                    plugin_loader: PluginLoader = PluginLoader(
+                        self,
+                        self.plugins
+                    )
+                    plugin_loader.load_plugins()
+                    self._plugins_loaded = True
+                await self.register_commands()
 
-            if self.config is not None:
-                await self.set_bot_info()
+                if self.config is not None:
+                    await self.set_bot_info()
 
-            logging.info('Starting Telegram bot!')
-            await asyncio.gather(
-                self.run_until_disconnected(),
-                self.keep_alive(),
-                self._cleanup_expired_sessions()
-            )
-
-        except ConnectionError:
-            logging.error('Failed to connect to Telegram.')
-            await asyncio.sleep(5)
-            await self.run()
+                logging.info('Starting Telegram bot!')
+                await asyncio.gather(
+                    self.run_until_disconnected(),
+                    self.keep_alive(),
+                    self._cleanup_expired_sessions()
+                )
+                break
+            except ConnectionError:
+                logging.error('Failed to connect to Telegram. Retrying in 5 seconds...')
+                await asyncio.sleep(5)
 
     async def shutdown(self) -> None:
         """
@@ -842,12 +848,18 @@ class Client(TelegramClient, Generic[StateT, SessionT]):
         Start the bot service and run it until interrupted.
         Handles cleanup upon keyboard interruption to ensure a graceful shutdown.
         """
-        loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
         try:
-            loop.run_until_complete(self.run())
+            asyncio.run(self.run())
         except KeyboardInterrupt:
             logging.info(
                 'Bot interrupted by user.\n'
                 'Disconnecting...'
             )
-            loop.run_until_complete(self.shutdown())
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    loop.create_task(self.shutdown())
+                else:
+                    loop.run_until_complete(self.shutdown())
+            except Exception:
+                pass
